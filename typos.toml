@@ -1,11 +1,6 @@
 # Spec 0008 FMT-2: typos skips what Oxfmt and Oxlint skip (tooling/config/ignore-patterns.ts), plus the lockfiles'
 # hashes. Add a real word the checker doesn't know under [default.extend-words].
 [files]
-extend-exclude = [
-  "pubspec.lock",
-  ".orvano/",
-  ".dart_tool/",
-  "build/",
-]
+extend-exclude = ["pubspec.lock", ".orvano/", ".dart_tool/", "build/"]
 
 [default.extend-words]
