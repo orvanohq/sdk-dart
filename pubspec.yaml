@@ -1,0 +1,33 @@
+name: orvano_server
+description: >-
+  Dart server SDK for Orvano, the self hostable backend. Call your project from
+  a backend, a CLI, or a Dart function with a secret key.
+version: 0.1.0
+repository: https://github.com/orvanohq/sdk-dart
+issue_tracker: https://github.com/orvanohq/sdk-dart/issues
+topics: [backend, database, auth, baas, server]
+
+# Spec 0004 PLT-3: a server key never belongs in a browser or phone app.
+platforms:
+  linux:
+  macos:
+  windows:
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  clock: ^1.1.0
+  collection: ^1.18.0
+  http: ^1.5.0
+  logging: ^1.2.0
+  meta: ^1.15.0
+
+dev_dependencies:
+  crypto: ^3.0.0
+  fake_async: ^1.3.0
+  # Not used directly: it sets the floor `dart pub downgrade` resolves for test,
+  # since 3.x looks for a frontend server snapshot newer SDKs no longer ship.
+  frontend_server_client: ^4.0.0
+  lints: ^6.0.0
+  test: ^1.27.0
