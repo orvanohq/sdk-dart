@@ -1,6 +1,10 @@
 // Spec 0004 Enforcement: DRT-2 (exactly these runtime dependencies), DRT-3 (no
 // dependency_overrides, caret ranges), PKG-5 (no native plugin folders), and
-// the Replaces list (banned packages anywhere).
+// the Replaces list (banned packages anywhere). Also spec 0009 DEP-1 and DEP-8:
+// every resolved package's LICENSE is on the permissive list. GitHub's
+// dependency graph has no usable license data for pub packages, so this check
+// replaces dependency-review's license gate in the Dart repos.
+import 'dart:convert';
 import 'dart:io';
 
 /// Each pubspec, and the runtime dependencies DRT-2 allows it.
@@ -64,11 +68,65 @@ void main() {
       }
     }
   }
+  problems.addAll(_licenseProblems());
   if (problems.isNotEmpty) {
     stderr.writeln('check_deps:\n  ${problems.join('\n  ')}');
     exit(1);
   }
-  print('check_deps: dependencies follow spec 0004 DRT-2 and DRT-3.');
+  print(
+    'check_deps: dependencies follow spec 0004 DRT-2 and DRT-3, and every '
+    'resolved package has a permissive license (spec 0009 DEP-1).',
+  );
+}
+
+/// The license of every package `pub get` resolved, read from its LICENSE
+/// file through .dart_tool/package_config.json (run `dart pub get` first).
+List<String> _licenseProblems() {
+  final config = File('.dart_tool/package_config.json');
+  if (!config.existsSync()) {
+    return ['.dart_tool/package_config.json is missing; run dart pub get'];
+  }
+  final json = jsonDecode(config.readAsStringSync()) as Map<String, Object?>;
+  final packages = (json['packages'] as List<Object?>?) ?? const [];
+  final problems = <String>[];
+  for (final entry in packages.whereType<Map<String, Object?>>()) {
+    final name = entry['name'];
+    final rootUri = entry['rootUri'];
+    if (name is! String || rootUri is! String) continue;
+    // This repo's own packages carry Apache 2.0 (spec 0009 LIC-1).
+    if (rootUri == '../' || !rootUri.contains(':')) continue;
+    final root = config.uri.resolve(
+      rootUri.endsWith('/') ? rootUri : '$rootUri/',
+    );
+    final license = _licenseOf(Directory.fromUri(root));
+    if (license == null) {
+      problems.add('$name: no LICENSE on spec 0009 DEP-1\'s permissive list');
+    }
+  }
+  return problems;
+}
+
+/// The SPDX ID of a package's license, or null when it has none or it is not
+/// one DEP-1 allows.
+String? _licenseOf(Directory root) {
+  for (final name in ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'COPYING']) {
+    final file = File('${root.path}$name');
+    if (!file.existsSync()) continue;
+    final text = file.readAsStringSync().replaceAll(RegExp(r'\s+'), ' ');
+    if (text.contains('Apache License') && text.contains('Version 2.0')) {
+      return 'Apache-2.0';
+    }
+    if (text.contains('Redistribution and use in source and binary forms')) {
+      return text.contains('Neither the name')
+          ? 'BSD-3-Clause'
+          : 'BSD-2-Clause';
+    }
+    if (text.contains('Permission is hereby granted, free of charge')) {
+      return 'MIT';
+    }
+    return null;
+  }
+  return null;
 }
 
 /// The top level sections of a pubspec that list packages, as
