@@ -83,7 +83,7 @@ ORVANO_IMAGE=orvano ORVANO_IMAGE_TAG=pinned docker compose --file .orvano/api/co
 dart test --tags conformance
 ```
 
-Set `ORVANO_CONFORMANCE_PARTIAL=1` when you run only some scenarios with `--name`. A scenario that can't run here goes in `test/conformance/skip.json` with a reason and an issue link.
+A scenario that requires a project gets one from `orvano admin bootstrap-project`, run through `docker compose exec` in that stack (spec 0017 SDK-4). Set `ORVANO_CONFORMANCE_PARTIAL=1` when you run only some scenarios with `--name`. A scenario that can't run here goes in `test/conformance/skip.json` with a reason and an issue link.
 
 ## License
 
